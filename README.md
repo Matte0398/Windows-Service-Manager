@@ -1,4 +1,4 @@
-# Windows Manage Services
+# Windows Service Manager
 
 PowerShell utility for managing Windows services.
 
