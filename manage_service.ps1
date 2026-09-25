@@ -14,7 +14,7 @@ function print_usage {
 
 function verify_svc_files {
     foreach ($item in $files) {
-        if (Test-Path $item -PathType Leaf) {
+        if (Test-Path -LiteralPath $item -PathType Leaf) {
             Clear-Content $item
         }
     }
@@ -57,9 +57,15 @@ function svc_existence {
 
 ########## MAIN ##########
 
-$file_svc_ok = "C:\temp\services_running.csv"
-$file_svc_ko = "C:\temp\services_not_running.csv"
+$dir = "C:\temp"
+$file_svc_ok = $dir + "\services_running.csv"
+$file_svc_ko = $dir + "\services_not_running.csv"
 $files = @($file_svc_ok, $file_svc_ko)
+
+if (-not (Test-Path -LiteralPath $dir -PathType Container)) {
+    Write-Host "The directory $dir does not exist! Create it before running the script!"
+    exit 1
+}
 
 print_usage
 Start-Sleep -Seconds 2.0        # it suspends the activity in a script or session for the specified period of time
