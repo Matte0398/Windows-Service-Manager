@@ -1,26 +1,22 @@
 # Windows Service Manager
 
-Interactive PowerShell utility for listing, stopping and restarting Windows services.
+An interactive PowerShell script for exporting Windows service information and stopping or restarting a selected service.
 
 **Run PowerShell as Administrator before using this program** to avoid permission-related errors.
 
 ## Features
 
-- Export service names, display names, statuses and startup types.
+- Export service names, display names, statuses and startup types to CSV.
 - Save running and non-running services in separate files.
-- Stop or restart a service from an interactive prompt.
-
-## Use Cases
-
-- Windows service troubleshooting
-- Operational support
-- Monitoring remediation tasks
+- Stop or restart a service by entering its name at the prompt.
 
 ## Requirements
 
 - Windows with PowerShell available.
 - Administrator privileges for stopping or restarting services.
-- A writable `C:\temp` directory. The script uses this fixed output path and does not create the directory automatically.
+- A writable `C:\temp` directory. The script stops if this directory does not exist.
+
+The script uses built-in PowerShell cmdlets; no additional modules need to be installed.
 
 ## Usage
 
@@ -39,7 +35,7 @@ Interactive PowerShell utility for listing, stopping and restarting Windows serv
    ```
 
 5. Enter `y` to continue and export the service lists.
-6. Enter `stop` or `restart`, then provide the service's **Name** from the exported files, such as `Spooler`. Use the internal service name: the action commands do not reliably resolve display names.
+6. Enter `stop` or `restart`, then provide the service's **Name** from the exported files, such as `Spooler`. Use the `Name` column rather than `DisplayName`.
 7. Enter `0` at the action prompt to exit.
 
 ## Output files
@@ -49,9 +45,27 @@ Interactive PowerShell utility for listing, stopping and restarting Windows serv
 | `C:\temp\services_running.csv`     | Services with status `Running`.                  |
 | `C:\temp\services_not_running.csv` | All services with a status other than `Running`. |
 
-Both files contain the columns `Name`, `DisplayName`, `Status` and `StartType`. Despite the `.csv` extension, values are separated by tabs.
+Both files are exported in UTF-8 with a semicolon (`;`) delimiter and the columns `Name`, `DisplayName`, `Status` and `StartType`. When importing them into a spreadsheet, select `;` as the separator.
+
+Example row:
+
+```csv
+"Name";"DisplayName";"Status";"StartType"
+"Spooler";"Print Spooler";"Running";"Automatic"
+```
 
 The files are overwritten whenever you enter `y` to continue. They represent the service states at export time and are not refreshed after stop or restart operations.
+
+## Example files
+
+The [examples](examples/) folder contains sample exports showing the format and content of the generated CSV files:
+
+| File                                                          | Contents                                            |
+| ------------------------------------------------------------- | --------------------------------------------------- |
+| [services_running.csv](examples/services_running.csv)         | Sample services with status `Running`.              |
+| [services_not_running.csv](examples/services_not_running.csv) | Sample services with a status other than `Running`. |
+
+Service names, display names and states reflect the system used to create the samples; your results may differ. Each execution writes its own exports to `C:\temp`.
 
 ## Troubleshooting
 
@@ -69,7 +83,13 @@ This message alone does not identify the cause. If it persists in an elevated se
 
 ### Output directory not found
 
-If exporting the service lists fails because `C:\temp` does not exist, create it using the command in the usage instructions, then rerun the script.
+If `C:\temp` does not exist, the script displays the following message and exits before exporting any files:
+
+```text
+The directory C:\temp does not exist! Create it before running the script!
+```
+
+Create the directory using the command in the usage instructions, then rerun the script.
 
 ### Service not found
 

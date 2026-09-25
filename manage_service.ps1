@@ -21,22 +21,13 @@ function verify_svc_files {
 }
 
 function create_svc_files {
-    $header = "Name`tDisplayName`tStatus`tStartType"
-    $header > $file_svc_ok
-    $header > $file_svc_ko
+    $get_svc |
+        Where-Object { $_.Status -eq "Running" } |
+        Export-Csv -LiteralPath $file_svc_ok -Delimiter ";" -NoTypeInformation -Encoding UTF8
 
-    foreach ($item in $get_svc) {
-        $svc_name = $item.'Name'
-        $svc_display_name = $item.'DisplayName'
-        $svc_status = $item.'Status'
-        $svc_type = $item.'StartType'
-
-        if ($svc_status -eq "Running") {
-            "$svc_name`t$svc_display_name`t$svc_status`t$svc_type" >> $file_svc_ok
-        } else {
-            "$svc_name`t$svc_display_name`t$svc_status`t$svc_type" >> $file_svc_ko
-        }
-    }
+    $get_svc |
+        Where-Object { $_.Status -ne "Running" } |
+        Export-Csv -LiteralPath $file_svc_ko -Delimiter ";" -NoTypeInformation -Encoding UTF8
 
     Write-Host "Running services can be found in: $file_svc_ok"
     Write-Host "Other services can be found in: $file_svc_ko"
