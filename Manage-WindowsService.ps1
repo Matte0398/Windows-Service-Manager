@@ -28,7 +28,7 @@ function Write-Log {
 }
 
 function Export-ServiceSnapshot {
-    $services = @(Get-Service | Select-Object Name, DisplayName, Status, StartType)
+    $services = @(Get-Service | Select-Object Name, DisplayName, @{Name='Status';Expression={[string]$_.Status}}, @{Name='StartType';Expression={[string]$_.StartType}})
     $groups = @{
         'services_running' = @($services | Where-Object { $_.Status -eq 'Running' })
         'services_not_running' = @($services | Where-Object { $_.Status -ne 'Running' })
