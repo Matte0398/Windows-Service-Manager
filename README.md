@@ -1,127 +1,117 @@
 # Windows Service Manager
 
-An interactive PowerShell script, [Manage-WindowsService.ps1](Manage-WindowsService.ps1), for exporting local Windows service information and stopping or restarting a selected service.
+A lightweight, interactive PowerShell tool for exporting and managing **local Windows services**.
 
-**Run PowerShell as Administrator before using this program** to avoid permission-related errors.
+## Table of Contents
+
+- [Features](#features)
+- [Requirements](#requirements)
+- [Usage](#usage)
+- [Output and logging](#output-and-logging)
+- [Troubleshooting](#troubleshooting)
+- [Repository structure](#repository-structure)
+- [License](#license)
 
 ## Features
 
-- Export service names, display names, statuses and startup types to CSV.
-- Save running and non-running services in separate files.
-- Stop or restart a service by entering its name at the prompt.
+- List running and non-running services in separate CSV or JSON files.
+- Start, stop or restart services.
+- Change startup type to `Automatic`, `Manual` or `Disabled`.
+- Log operations and errors with timestamps.
+- Report failures without interrupting the interactive menu; return exit code `1` if any operation fails.
+- Accept a service's internal `Name` or exact `DisplayName`.
 
 ## Requirements
 
-- Windows with PowerShell available.
-- Administrator privileges for stopping or restarting services.
-- A writable `C:\temp` directory. The script stops if this directory does not exist.
+- Windows and Windows PowerShell 5.1 or PowerShell 7 with the Service cmdlets available.
+- Run PowerShell **as Administrator** when changing services.
+- Write permission for the output directory (created automatically if missing).
 
-The script uses built-in PowerShell cmdlets; no additional modules need to be installed.
+No third-party PowerShell modules are required.
 
 ## Usage
 
-1. Open the Start menu, search for **PowerShell**, select **Run as administrator** (or **Esegui come amministratore**) and accept the elevation prompt.
-2. Navigate to the directory containing `Manage-WindowsService.ps1`.
-3. Create the output directory if it does not already exist:
+Open PowerShell, navigate to the repository and run:
 
-   ```powershell
-   New-Item -ItemType Directory -Path C:\temp -Force
-   ```
+```powershell
+.\Manage-WindowsService.ps1
+```
 
-4. Run the script:
+To select JSON or both formats, and customize the output directory:
 
-   ```powershell
-   powershell.exe -NoProfile -File .\Manage-WindowsService.ps1
-   ```
+```powershell
+.\Manage-WindowsService.ps1 -OutputFormat Json
+.\Manage-WindowsService.ps1 -OutputFormat Both -OutputDirectory 'C:\temp'
+```
 
-5. Enter `y` to continue and export the service lists.
-6. Enter `stop` or `restart`, then provide the service's **Name** from the exported files, such as `Spooler`. Use the `Name` column rather than `DisplayName`.
-7. Enter `0` at the action prompt to exit.
+At the initial prompt, enter `y` to export the service inventory. Then use the interactive menu:
 
-The script accepts no command-line parameters and requires interactive input. Any response other than `y` at the initial prompt exits without exporting files or changing services. At the action prompt, an unrecognized response simply repeats the prompt. Script execution must be permitted by the applicable PowerShell execution policy.
+```text
+Action (start/stop/restart/starttype/0 to exit): starttype
+Service Name or DisplayName: Spooler
+Startup type (Automatic/Manual/Disabled): Manual
+2026-10-11 10:00:00 [INFO] starttype succeeded for 'Spooler' (before: Running; after: Running; startup: Manual).
+```
 
-## Output files
+Choose `0` to exit. Inventory exports are refreshed on exit and represent the latest observed service states. Changes to services are applied immediately, without a confirmation prompt.
 
-| File                               | Contents                                         |
-| ---------------------------------- | ------------------------------------------------ |
-| `C:\temp\services_running.csv`     | Services with status `Running`.                  |
-| `C:\temp\services_not_running.csv` | All services with a status other than `Running`. |
+## Output and logging
 
-Both files are exported in UTF-8 with a semicolon (`;`) delimiter and the columns `Name`, `DisplayName`, `Status` and `StartType`. When importing them into a spreadsheet, select `;` as the separator.
+By default, files are written to `C:\temp`. The CSV files use UTF-8 and `;` as the separator.
 
-Example row:
+| File | Description |
+| --- | --- |
+| `services_running.csv` | Running services (CSV mode) |
+| `services_not_running.csv` | All other service states (CSV mode) |
+| `services_running.json` | Running services (JSON mode) |
+| `services_not_running.json` | All other service states (JSON mode) |
+| `service_manager.log` | Timestamped activity and error log (all modes) |
+
+Each inventory record contains `Name`, `DisplayName`, `Status` and `StartType`. JSON files contain arrays, including `[]` when there are no matching services. The log is appended across runs; inventories are overwritten. Selecting a format does not remove inventory files generated by earlier runs in other formats.
+
+Example CSV:
 
 ```csv
 "Name";"DisplayName";"Status";"StartType"
 "Spooler";"Print Spooler";"Running";"Automatic"
 ```
 
-The files are overwritten whenever you enter `y` to continue. They represent the service states at export time and are not refreshed after stop or restart operations.
+Example JSON:
 
-`Not running` includes every status other than `Running`, such as `Stopped` or `Paused`; it does not necessarily indicate a service failure. The CSV files list startup types for reference, but the script cannot change them.
-
-## Example files
-
-The [examples](examples/) folder contains sample exports showing the format and content of the generated CSV files:
-
-| File                                                          | Contents                                            |
-| ------------------------------------------------------------- | --------------------------------------------------- |
-| [services_running.csv](examples/services_running.csv)         | Sample services with status `Running`.              |
-| [services_not_running.csv](examples/services_not_running.csv) | Sample services with a status other than `Running`. |
-
-Service names, display names and states reflect the system used to create the samples; your results may differ. Each execution writes its own exports to `C:\temp`.
+```json
+[
+  {
+    "Name": "Spooler",
+    "DisplayName": "Print Spooler",
+    "Status": "Running",
+    "StartType": "Automatic"
+  }
+]
+```
 
 ## Troubleshooting
 
-### PowerShell was not opened as Administrator
+- **Access denied:** run PowerShell as Administrator; some protected services cannot be modified even when elevated.
+- **Service not found:** use its internal `Name` (for example, `Spooler`) or exact display name.
+- **Service change fails:** inspect `service_manager.log`; dependencies, policies and service restrictions may prevent a requested action.
+- **Export fails:** verify disk space, output-directory permissions and whether a destination file is locked.
 
-If you try to stop a service without sufficient privileges, you may see an error like this on an Italian-language Windows installation:
+A nonzero exit code signals a detected failure; individual errors are logged. The script cannot guarantee detection of every possible operating-system or service-side issue.
 
-```text
-Stop-Service : Impossibile arrestare il servizio 'Servizio di gestione dell'accesso alle funzionalità (camsvc)'
-```
-
-Close the current PowerShell window, reopen it with **Run as administrator** (**Esegui come amministratore**) and run the script again from its directory. Restart operations can also fail when the session lacks the required permissions.
-
-This message alone does not identify the cause. If it persists in an elevated session, check the complete error details, service dependencies and any restrictions on stopping that service.
-
-### Output directory not found
-
-If `C:\temp` does not exist, the script displays the following message and exits before exporting any files:
-
-```text
-The directory C:\temp does not exist! Create it before running the script!
-```
-
-Create the directory using the command in the usage instructions, then rerun the script.
-
-### Service not found
-
-Copy the internal service name from the `Name` column of an exported file and retry. The script takes its service list when you enter `y`; rerun it if a service was installed afterward.
-
-The preliminary validation also accepts `DisplayName`, but the operation subsequently calls `Get-Service` using its default `Name` parameter. A display name can therefore pass validation and still fail during execution. Use the exact internal `Name` for reliable operation.
-
-## Scope and limitations
-
-- Only services on the local computer are managed; there is no remote-host option.
-- Available actions are `stop` and `restart`. There is no separate start action or startup-type editor.
-- Operations run immediately after entering the service name, without a second confirmation.
-- Stop/restart calls do not use `-Force`. Dependencies, service restrictions or insufficient permissions can prevent an operation.
-- The script does not catch operation/export errors or display a verified post-operation status. Inspect any PowerShell error and check the service afterward, for example with `Get-Service -Name 'Spooler'`.
-- There is no structured action log, JSON output or status-based exit code. A missing output directory explicitly exits with code `1`; a normal end does not establish that every requested action succeeded.
-
-## Project layout
+## Repository structure
 
 ```text
 Windows-Service-Manager/
-|-- Manage-WindowsService.ps1
-|-- README.md
-|-- LICENSE
-`-- examples/
+|-- Manage-WindowsService.ps1   # Main script
+|-- README.md                   # Documentation
+|-- LICENSE                     # MIT license
+`-- examples/                  # Sample CSV exports
     |-- services_running.csv
     `-- services_not_running.csv
 ```
 
+The `examples/` directory contains sample inventories. Any real computer names or IP addresses used in documentation or sample data should be replaced by neutral placeholders.
+
 ## License
 
-Released under the MIT License. See [LICENSE](LICENSE).
+Licensed under the MIT License. See [LICENSE](LICENSE).
