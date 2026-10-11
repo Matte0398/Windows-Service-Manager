@@ -1,0 +1,206 @@
+﻿[
+    {
+        "Name":  "AarSvc_41eae",
+        "DisplayName":  "Agent Activation Runtime_41eae",
+        "Status":  "Stopped",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "AarSvc_8116dc",
+        "DisplayName":  "Agent Activation Runtime_8116dc",
+        "Status":  "Stopped",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "ADPSvc",
+        "DisplayName":  "Servizio piattaforma dati aggregati",
+        "Status":  "Stopped",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "ALG",
+        "DisplayName":  "Servizio Gateway di livello applicazione",
+        "Status":  "Stopped",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "AppIDSvc",
+        "DisplayName":  "Identità applicazione",
+        "Status":  "Running",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "Appinfo",
+        "DisplayName":  "Informazioni applicazioni",
+        "Status":  "Running",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "AppMgmt",
+        "DisplayName":  "Gestione applicazione",
+        "Status":  "Running",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "AppReadiness",
+        "DisplayName":  "Preparazione app",
+        "Status":  "Stopped",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "AppVClient",
+        "DisplayName":  "Microsoft App-V Client",
+        "Status":  "Stopped",
+        "StartType":  "Disabled"
+    },
+    {
+        "Name":  "AppXSvc",
+        "DisplayName":  "Servizio di distribuzione AppX (AppXSVC)",
+        "Status":  "Running",
+        "StartType":  "Automatic"
+    },
+    {
+        "Name":  "ApxSvc",
+        "DisplayName":  "Servizio proxy dispositivo audio virtuale Windows",
+        "Status":  "Stopped",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "AssignedAccessManagerSvc",
+        "DisplayName":  "Servizio AssignedAccessManager",
+        "Status":  "Stopped",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "AudioEndpointBuilder",
+        "DisplayName":  "Generatore endpoint audio Windows",
+        "Status":  "Running",
+        "StartType":  "Automatic"
+    },
+    {
+        "Name":  "Audiosrv",
+        "DisplayName":  "Audio di Windows",
+        "Status":  "Running",
+        "StartType":  "Automatic"
+    },
+    {
+        "Name":  "autotimesvc",
+        "DisplayName":  "Ora cellulare",
+        "Status":  "Stopped",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "AxInstSV",
+        "DisplayName":  "ActiveX Installer (AxInstSV)",
+        "Status":  "Stopped",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "BalloonService",
+        "DisplayName":  "BalloonService",
+        "Status":  "Running",
+        "StartType":  "Automatic"
+    },
+    {
+        "Name":  "BcastDVRUserService_41eae",
+        "DisplayName":  "Servizio utente Broadcast e Game DVR_41eae",
+        "Status":  "Stopped",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "BcastDVRUserService_8116dc",
+        "DisplayName":  "Servizio utente Broadcast e Game DVR_8116dc",
+        "Status":  "Stopped",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "BDESVC",
+        "DisplayName":  "Servizio di crittografia unità BitLocker",
+        "Status":  "Running",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "BFE",
+        "DisplayName":  "BFE (Base Filtering Engine)",
+        "Status":  "Running",
+        "StartType":  "Automatic"
+    },
+    {
+        "Name":  "BITS",
+        "DisplayName":  "Servizio trasferimento intelligente in background",
+        "Status":  "Stopped",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "BluetoothUserService_41eae",
+        "DisplayName":  "Servizio di supporto utente Bluetooth_41eae",
+        "Status":  "Stopped",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "BluetoothUserService_8116dc",
+        "DisplayName":  "Servizio di supporto utente Bluetooth_8116dc",
+        "Status":  "Stopped",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "BrokerInfrastructure",
+        "DisplayName":  "Servizio infrastruttura attività in background",
+        "Status":  "Running",
+        "StartType":  "Automatic"
+    },
+    {
+        "Name":  "BTAGService",
+        "DisplayName":  "Servizio gateway audio Bluetooth",
+        "Status":  "Stopped",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "BthAvctpSvc",
+        "DisplayName":  "Servizio AVCTP",
+        "Status":  "Stopped",
+        "StartType":  "Manual"
+    },
+    {
+        "Name":  "camsvc",
+        "DisplayName":  "Servizio di gestione dell\u0027accesso alle funzionalità",
+        "Status":  "Running",
+        "StartType":  "Automatic"
+    },
+    {
+        "Name":  "cbdhsvc_41eae",
+        "DisplayName":  "Servizio utente degli Appunti_41eae",
+        "Status":  "Running",
+        "StartType":  "Automatic"
+    },
+    {
+        "Name":  "cbdhsvc_8116dc",
+        "DisplayName":  "Servizio utente degli Appunti_8116dc",
+        "Status":  "Running",
+        "StartType":  "Automatic"
+    },
+    {
+        "Name":  "CDPSvc",
+        "DisplayName":  "Servizio piattaforma dispositivi connessi",
+        "Status":  "Running",
+        "StartType":  "Automatic"
+    },
+    {
+        "Name":  "CDPUserSvc_41eae",
+        "DisplayName":  "Servizio utente piattaforma dispositivi connessi_41eae",
+        "Status":  "Running",
+        "StartType":  "Automatic"
+    },
+    {
+        "Name":  "CDPUserSvc_8116dc",
+        "DisplayName":  "Servizio utente piattaforma dispositivi connessi_8116dc",
+        "Status":  "Running",
+        "StartType":  "Automatic"
+    },
+    {
+        "Name":  "CertPropSvc",
+        "DisplayName":  "Propagazione certificati",
+        "Status":  "Running",
+        "StartType":  "Manual"
+    }
+]

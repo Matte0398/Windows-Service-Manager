@@ -1,103 +1,215 @@
-#######################################################################
-## Description: Script for managing services on your Windows system
+########################################################################################
+## Description: Manage local Windows services and export CSV or JSON service reports
 ##
 ## Author: Matteo Z.
-#######################################################################
+########################################################################################
 
-function print_usage {
-	Write-Host -ForegroundColor "red" "`nDescription:"
-	Write-Host "   Script for managing services on your Windows system (such as getting the list of services, restarting them or stopping them)"
-    Write-Host "   To avoid errors when performing stop or restart services, it is recommended to run the script as administrator"
-	Write-Host "`n   File created witih the list of the running services: $file_svc_ok"
-	Write-Host "`n   File created with the list of other services excluding running services: $file_svc_ko`n"
+[CmdletBinding()]
+param(
+    [string]$OutputDirectory = 'C:\temp',
+    [ValidateSet('Csv', 'Json', 'Both')]
+    [string]$OutputFormat = 'Csv',
+    [switch]$Force,
+    [Alias('H')]
+    [switch]$Help
+)
+
+
+function Show-Usage {
+    Write-Output @'
+Usage:
+  .\Manage-WindowsService.ps1 [-OutputDirectory <DIRECTORY>] [-OutputFormat <Csv|Json|Both>]
+  .\Manage-WindowsService.ps1 -Help
+
+Parameters:
+  -OutputDirectory   Report and log directory; default: C:\temp.
+                     Created automatically if missing.
+  -OutputFormat      Csv (default), Json or Both. Existing reports are overwritten.
+  -Force    Allow stop/restart operations when dependent services exist.
+  -Help, -H          Display usage without creating files or changing services.
+
+Interactive actions:
+  start              Start a service.
+  stop               Stop a service.
+  restart            Restart a service.
+  starttype          Set Automatic, Manual or Disabled startup type.
+  0                  Exit the action menu.
+
+Enter y at the initial prompt to export services and open the action menu.
+Services can be selected by Name or an unambiguous DisplayName.
+Reports are exported before and after the action loop.
+The diagnostic log is appended to service_manager.log in the output directory.
+Use an elevated PowerShell session to change services.
+
+Examples:
+  .\Manage-WindowsService.ps1
+  .\Manage-WindowsService.ps1 -OutputDirectory 'C:\Reports\Services' -OutputFormat Both
+'@
 }
 
 
-function verify_svc_files {
-    foreach ($item in $files) {
-        if (Test-Path -LiteralPath $item -PathType Leaf) {
-            Clear-Content $item
+function Write-Log {
+    param(
+        [string]$Message,
+        [ValidateSet('INFO', 'ERROR', 'WARN')]
+        [string]$Level = 'INFO'
+    )
+
+    $line = '{0} [{1}] {2}' -f (Get-Date -Format 'yyyy-MM-dd HH:mm:ss'), $Level, $Message
+    Write-Host $line
+
+    if ($script:LogFile) {
+        try {
+            Add-Content -LiteralPath $script:LogFile -Value $line -Encoding UTF8 -ErrorAction Stop
+        } catch {
+            $script:HadErrors = $true
+            Write-Warning "Could not write log file: $($_.Exception.Message)"
         }
     }
 }
 
 
-function create_svc_files {
-    $get_svc |
-        Where-Object { $_.Status -eq "Running" } |
-        Export-Csv -LiteralPath $file_svc_ok -Delimiter ";" -NoTypeInformation -Encoding UTF8
+function Export-ServiceSnapshot {
+    $services = @(
+        Get-Service |
+            Select-Object Name, DisplayName,
+                @{Name = 'Status'; Expression = { [string]$_.Status }},
+                @{Name = 'StartType'; Expression = { [string]$_.StartType }}
+    )
 
-    $get_svc |
-        Where-Object { $_.Status -ne "Running" } |
-        Export-Csv -LiteralPath $file_svc_ko -Delimiter ";" -NoTypeInformation -Encoding UTF8
+    if ($OutputFormat -in @('Csv', 'Both')) {
+        $csvPath = Join-Path $OutputDirectory 'services.csv'
 
-    Write-Host "Running services can be found in: $file_svc_ok"
-    Write-Host "Other services can be found in: $file_svc_ko"
+        $services |
+            Export-Csv -LiteralPath $csvPath -Delimiter ';' `
+                -NoTypeInformation -Encoding UTF8
+
+        Write-Log "Exported $($services.Count) services to $csvPath"
+    }
+
+    if ($OutputFormat -in @('Json', 'Both')) {
+        $jsonPath = Join-Path $OutputDirectory 'services.json'
+        $servicesJson = ConvertTo-Json -InputObject $services -Depth 3
+
+        Set-Content -LiteralPath $jsonPath -Value $servicesJson -Encoding UTF8
+        Write-Log "Exported $($services.Count) services to $jsonPath"
+    }
 }
 
 
-function svc_existence {
-    $flag = 0
+function Resolve-Service {
+    param([string]$ServiceName)
 
-    foreach ($item in $get_svc) {
-        if ($item.'Name' -eq $user_input -or $item.'DisplayName' -eq $user_input) {
-            $flag = 1
-        }
+    $matches = @(Get-Service | Where-Object {
+        $_.Name -eq $ServiceName -or $_.DisplayName -eq $ServiceName
+    })
+
+    if ($matches.Count -eq 0) {
+        throw "Service '$ServiceName' was not found."
     }
 
-    return $flag
+    if ($matches.Count -gt 1) {
+        throw "Service name '$ServiceName' is ambiguous. Use the internal service Name."
+    }
+
+    return $matches[0]
 }
 
 
 ########## MAIN ##########
 
-$dir = "C:\temp"
-$file_svc_ok = $dir + "\services_running.csv"
-$file_svc_ko = $dir + "\services_not_running.csv"
-$files = @($file_svc_ok, $file_svc_ko)
+if ($Help) {
+    Show-Usage
+    exit 0
+}
 
-if (-not (Test-Path -LiteralPath $dir -PathType Container)) {
-    Write-Host "The directory $dir does not exist! Create it before running the script!"
+$ErrorActionPreference = 'Stop'
+$script:HadErrors = $false
+$script:LogFile = $null
+
+try {
+    if (-not (Test-Path -LiteralPath $OutputDirectory -PathType Container)) {
+        New-Item -ItemType Directory -Path $OutputDirectory -Force | Out-Null
+    }
+
+    $script:LogFile = Join-Path $OutputDirectory 'service_manager.log'
+    Write-Log "Windows Service Manager started (format: $OutputFormat)."
+    Write-Log 'Use an elevated PowerShell session to change services.'
+} catch {
+    Write-Host "Initialization failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 
-print_usage
-Start-Sleep -Seconds 2.0        # it suspends the activity in a script or session for the specified period of time
+try {
+    $answer = Read-Host 'Continue and export local services? (y/n)'
 
-$user_input = Read-Host "Do you want to continue with the program? (y/n)"
+    if ($answer -ne 'y') {
+        Write-Log 'Cancelled by user.'
+        exit 0
+    }
 
-if ($user_input -eq "y") {
-    $get_svc = Get-Service | Select-Object Name, DisplayName, Status, StartType
-    verify_svc_files
-    create_svc_files
+    try {
+        Export-ServiceSnapshot
+    } catch {
+        $script:HadErrors = $true
+        Write-Log "Initial export failed: $($_.Exception.Message)" 'ERROR'
+    }
 
     while ($true) {
-        $user_input = Read-Host "`nDo you want restart a service or stop its? (restart/stop) - type 0 to quit"
+        Write-Host ''
+        $action = (Read-Host 'Action (start/stop/restart/starttype/0 to exit)').Trim().ToLowerInvariant()
 
-        if ($user_input -eq "restart") {
-            $user_input = Read-Host "Type the service you want to restart"
-            $flag = svc_existence
+        if ($action -eq '0') { break }
 
-            if ($flag) {
-                Get-Service $user_input | Restart-Service
-            } else {
-                Write-Host "Service not found!"
+        if ($action -notin @('start', 'stop', 'restart', 'starttype')) {
+            Write-Log "Unknown action '$action'." 'WARN'
+            continue
+        }
+
+        $serviceName = (Read-Host 'Service Name or DisplayName').Trim()
+
+        try {
+            $service = Resolve-Service -ServiceName $serviceName
+            $before = "$($service.Status)"
+
+            switch ($action) {
+                'start'   { Start-Service -InputObject $service -ErrorAction Stop }
+                'stop'    { Stop-Service -InputObject $service -Force:$Force -ErrorAction Stop }
+                'restart' { Restart-Service -InputObject $service -Force:$Force -ErrorAction Stop }
+                'starttype' {
+                    $startType = (Read-Host 'Startup type (Automatic/Manual/Disabled)').Trim()
+                    
+                    if ($startType -notin @('Automatic', 'Manual', 'Disabled')) {
+                        throw "Invalid startup type '$startType'."
+                    }
+
+                    Set-Service -Name $service.Name -StartupType $startType -ErrorAction Stop
+                }
             }
-        } elseif ($user_input -eq "stop") {
-            $user_input = Read-Host "Type the service you want to stop"
-            $flag = svc_existence
 
-            if ($flag) {
-                Get-Service $user_input | Stop-Service
-            } else {
-                Write-Host "Service not found!"
-            }
-        } elseif ($user_input -eq 0) {
-            break
+            $updated = Get-Service -Name $service.Name -ErrorAction Stop
+            Write-Log "$action succeeded for '$($service.Name)' (before: $before; after: $($updated.Status); startup: $($updated.StartType))."
+        } catch {
+            $script:HadErrors = $true
+            Write-Log "$action failed for '$serviceName': $($_.Exception.Message)" 'ERROR'
         }
     }
-} else {
-    Write-Host "Exit from the program!"
+
+    try {
+        Export-ServiceSnapshot
+    } catch {
+        $script:HadErrors = $true
+        Write-Log "Final export failed: $($_.Exception.Message)" 'ERROR'
+    }
+} catch {
+    $script:HadErrors = $true
+    Write-Log "Unexpected execution error: $($_.Exception.Message)" 'ERROR'
 }
 
-Write-Host ""
+if ($script:HadErrors) {
+    Write-Log 'Completed with errors. Check the log.' 'WARN'
+    exit 1
+}
+
+Write-Log 'Completed successfully.'
+exit 0

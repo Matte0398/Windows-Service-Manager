@@ -1,0 +1,10 @@
+﻿2026-10-11 10:00:00 [INFO] Windows Service Manager started (format: Both).
+2026-10-11 10:00:00 [INFO] Use an elevated PowerShell session to change services.
+2026-10-11 10:00:05 [INFO] Exported 34 services to C:\temp\services.csv
+2026-10-11 10:00:05 [INFO] Exported 34 services to C:\temp\services.json
+2026-10-11 10:00:10 [INFO] restart succeeded for 'Spooler' (before: Running; after: Running; startup: Automatic).
+2026-10-11 10:00:20 [WARN] Unknown action 'status'.
+2026-10-11 10:00:30 [ERROR] stop failed for 'ExampleMissingService': Service 'ExampleMissingService' was not found.
+2026-10-11 10:00:40 [INFO] Exported 34 services to C:\temp\services.csv
+2026-10-11 10:00:40 [INFO] Exported 34 services to C:\temp\services.json
+2026-10-11 10:00:40 [WARN] Completed with errors. Check the log.
