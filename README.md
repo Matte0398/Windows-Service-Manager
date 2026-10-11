@@ -4,6 +4,7 @@
 
 ## Contents
 
+- [Repository structure](#repository-structure)
 - [Requirements](#requirements)
 - [Usage and parameters](#usage-and-parameters)
 - [Interactive actions](#interactive-actions)
@@ -11,6 +12,19 @@
 - [Example files](#example-files)
 - [Exit codes and troubleshooting](#exit-codes-and-troubleshooting)
 - [License](#license)
+
+## Repository structure
+
+```text
+Windows-Service-Manager/
+|-- Manage-WindowsService.ps1
+|-- README.md
+|-- LICENSE
+`-- examples/
+    |-- services.csv
+    |-- services.json
+    `-- service_manager.log
+```
 
 ## Requirements
 
