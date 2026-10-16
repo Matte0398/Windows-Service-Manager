@@ -1,140 +1,171 @@
 ﻿# Windows Service Manager
 
-[Manage-WindowsService.ps1](Manage-WindowsService.ps1) is an interactive PowerShell utility for managing local Windows services and exporting their current state to a single CSV or JSON report. It records operations and errors in a diagnostic log.
+An interactive PowerShell utility for managing local Windows services and exporting service information to CSV or JSON reports.
+
+The script allows users to start, stop, restart and configure Windows services through a simple command-line interface. It also provides diagnostic logging to track operations and errors.
 
 ## Contents
 
-- [Repository structure](#repository-structure)
+- [Features](#features)
+- [Repository Structure](#repository-structure)
 - [Requirements](#requirements)
-- [Usage and parameters](#usage-and-parameters)
-- [Interactive actions](#interactive-actions)
-- [Reports and log](#reports-and-log)
-- [Example files](#example-files)
-- [Exit codes and troubleshooting](#exit-codes-and-troubleshooting)
+- [Usage](#usage)
+- [Interactive Actions](#interactive-actions)
+- [Reports and Examples](#reports-and-examples)
+- [Troubleshooting](#troubleshooting)
 - [License](#license)
 
-## Repository structure
+## Features
+
+- Start, stop and restart local Windows services.
+- Change service startup types (`Automatic`, `Manual`, `Disabled`).
+- Select services by internal `Name` or `DisplayName`.
+- Export service information to CSV, JSON or both formats.
+- Record operations, warnings and errors in a diagnostic log.
+- Support forced stop and restart operations when required.
+
+## Repository Structure
 
 ```text
 Windows-Service-Manager/
-|-- Manage-WindowsService.ps1
-|-- README.md
-|-- LICENSE
-`-- examples/
-    |-- services.csv
-    |-- services.json
-    `-- service_manager.log
+├── Manage-WindowsService.ps1
+├── README.md
+├── LICENSE
+└── examples/
+    ├── service_manager.log
+    ├── services.csv
+    └── services.json
 ```
 
 ## Requirements
 
-- Windows with PowerShell and the built-in service cmdlets.
-- An interactive terminal for answering prompts.
-- Write access to the output directory, or permission to create it.
-- An elevated PowerShell session with appropriate permissions to change services.
+- Windows operating system with PowerShell and built-in service cmdlets.
+- An interactive PowerShell terminal.
+- Write permissions for the selected output directory.
+- Administrator privileges for service operations that require elevation.
 
-Run PowerShell as Administrator for service operations. Script execution must be allowed by the applicable execution policy. No additional modules are required.
+No additional PowerShell modules are required.
 
-## Usage and parameters
+**Note:** Run PowerShell as Administrator when modifying services. Script execution must also be permitted by the applicable PowerShell execution policy.
 
-From the project directory:
+## Usage
+
+Clone the repository or download the PowerShell script, then open a PowerShell terminal in the project directory.
+
+### Basic execution
 
 ```powershell
-# Default CSV report in C:\temp
 .\Manage-WindowsService.ps1
+```
 
-# Export both formats to a custom directory
+By default, the script exports service information in CSV format to `C:\temp`.
+
+### Custom output directory and format
+
+```powershell
 .\Manage-WindowsService.ps1 -OutputDirectory 'C:\Reports\Services' -OutputFormat Both
+```
 
-# Enable forced stop/restart operations
+### Enable forced operations
+
+```powershell
 .\Manage-WindowsService.ps1 -Force
+```
 
-# Display usage without creating files or changing services
+### Display help
+
+```powershell
 .\Manage-WindowsService.ps1 -Help
 ```
 
-| Parameter          | Default   | Purpose                                                            |
-| ------------------ | --------- | ------------------------------------------------------------------ |
-| `-OutputDirectory` | `C:\temp` | Directory for reports and log; created automatically if missing.   |
-| `-OutputFormat`    | `Csv`     | `Csv`, `Json` or `Both`; selects report files, not console output. |
-| `-Force`           | Off       | Passes `-Force` to stop/restart operations throughout the session. |
-| `-Help`, `-H`      | Off       | Displays usage and exits before initialization.                    |
+### Available Parameters
 
-Execution without arguments opens the interactive program. At the initial prompt, enter `y` to export services and open the action menu. Any other response cancels; the output directory and startup log may already have been created.
+| Parameter          | Default   | Description                                                       |
+| ------------------ | --------- | ----------------------------------------------------------------- |
+| `-OutputDirectory` | `C:\temp` | Directory for reports and logs. Created automatically if missing. |
+| `-OutputFormat`    | `Csv`     | Report format: `Csv`, `Json` or `Both`.                           |
+| `-Force`           | Disabled  | Enables forced stop and restart operations.                       |
+| `-Help`, `-H`      | Disabled  | Displays usage information and exits.                             |
 
-## Interactive actions
+### Execution Flow
 
-| Action      | Behavior                                                  |
-| ----------- | --------------------------------------------------------- |
-| `start`     | Starts the selected service.                              |
-| `stop`      | Stops the selected service.                               |
-| `restart`   | Restarts the selected service.                            |
-| `starttype` | Sets startup type to `Automatic`, `Manual` or `Disabled`. |
-| `0`         | Leaves the menu and triggers the final export.            |
+1. The script initializes the output directory and diagnostic log.
+2. The user is prompted to confirm execution by entering `y`.
+3. An initial snapshot of local Windows services is exported.
+4. The interactive menu allows the user to manage services.
+5. Selecting `0` exits the menu and generates a final service report.
 
-Select a service by its internal `Name` or an unambiguous `DisplayName`. The script resolves services afresh for each operation. If the name is missing or ambiguous, it logs an error and returns to the menu. Unknown actions produce a warning and repeat the prompt.
+The final export overwrites existing reports of the selected format, ensuring they reflect the service state at the end of the session.
 
-After a successful operation, the script queries the service again and logs its before/after status and current startup type. Changing startup type does not itself start or stop the service. Operations have no additional confirmation, and only local services are managed.
+If the initial prompt is declined, execution ends without exporting services, although the output directory and log may already have been created.
 
-`-Force` allows stop/restart when dependent services exist and can also stop dependent services. It does not bypass permissions or all service restrictions. Dependent services are not explicitly restored to their previous state by this script; consider the impact before forcing operations on shared system services.
+## Interactive Actions
 
-## Reports and log
+Once execution is confirmed, the following actions are available:
 
-Files are written under `-OutputDirectory`:
+| Action      | Description                                                     |
+| ----------- | --------------------------------------------------------------- |
+| `start`     | Start a selected service.                                       |
+| `stop`      | Stop a selected service.                                        |
+| `restart`   | Restart a selected service.                                     |
+| `starttype` | Change the startup type to `Automatic`, `Manual` or `Disabled`. |
+| `0`         | Exit the menu and export the final service snapshot.            |
 
-| File                  | When produced                          | Contents                                                             |
-| --------------------- | -------------------------------------- | -------------------------------------------------------------------- |
-| `services.csv`        | `Csv` or `Both`                        | All services in one semicolon-separated UTF-8 CSV.                   |
-| `services.json`       | `Json` or `Both`                       | All services in one UTF-8 JSON array.                                |
-| `service_manager.log` | Initialization and subsequent activity | Appended timestamped messages with `INFO`, `WARN` or `ERROR` levels. |
+Services can be selected using their internal `Name` or an unambiguous `DisplayName`.
 
-Both reports contain the same four fields:
+After each successful operation, the script retrieves the updated service information and logs its previous and current status along with its startup type.
 
-| Field         | Meaning                                                  |
-| ------------- | -------------------------------------------------------- |
-| `Name`        | Internal service name.                                   |
-| `DisplayName` | User-facing service name.                                |
-| `Status`      | Current state, such as `Running`, `Stopped` or `Paused`. |
-| `StartType`   | Configured startup type.                                 |
+**Important notes:**
 
-Example CSV row:
+- Only local Windows services are supported.
+- Changing the startup type does not automatically start or stop the service.
+- Operations are performed without an additional confirmation prompt.
+- The `-Force` parameter may also stop dependent services. These services are not automatically restored to their previous state.
+- Forced operations do not bypass Windows permissions or service restrictions.
 
-```csv
-"Name";"DisplayName";"Status";"StartType"
-"Spooler";"Print Spooler";"Running";"Automatic"
-```
+## Reports and Examples
 
-Existing reports in the selected format are overwritten, so a successful final export reflects the end-of-session snapshot.
+The script generates reports and a diagnostic log in the configured output directory.
 
-## Example files
+| File                  | Description                                                             |
+| --------------------- | ----------------------------------------------------------------------- |
+| `services.csv`        | Service inventory in semicolon-separated UTF-8 CSV format.              |
+| `services.json`       | Service inventory as a UTF-8 JSON array.                                |
+| `service_manager.log` | Timestamped diagnostic messages with `INFO`, `WARN` and `ERROR` levels. |
 
-The [examples](examples/) folder contains:
+Both report formats contain the following fields:
 
-| File                                                | Contents                                                                                   |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| [services.csv](examples/services.csv)               | Combined sample inventory, including running and non-running services.                     |
-| [services.json](examples/services.json)             | The same sample records as a JSON array.                                                   |
-| [service_manager.log](examples/service_manager.log) | Illustrative session using `Both`, with exports, a restart, a warning and a failed lookup. |
+| Field         | Description                                             |
+| ------------- | ------------------------------------------------------- |
+| `Name`        | Internal Windows service name.                          |
+| `DisplayName` | User-friendly service name.                             |
+| `Status`      | Current service status, such as `Running` or `Stopped`. |
+| `StartType`   | Configured service startup type.                        |
 
-## Exit codes and troubleshooting
+The diagnostic log records script initialization, exports, service operations, warnings and errors. Existing log entries are preserved across executions.
 
-| Code | Meaning                                                                             |
-| ---- | ----------------------------------------------------------------------------------- |
-| `0`  | Successful completion, initial cancellation or help.                                |
-| `1`  | Initialization failure or completion with recorded operation, export or log errors. |
+### Example Output Files
 
-| Problem                                    | What to check                                                                                                 |
-| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| Access denied during an operation          | Run elevated and verify account permissions and service restrictions.                                         |
-| Stop/restart blocked by dependent services | Review dependencies; use `-Force` only when stopping them is acceptable.                                      |
-| Service not found or ambiguous             | Use the exact internal `Name` from the report.                                                                |
-| Initialization or export failure           | Output path, write permissions, available disk space and whether the report is locked by another application. |
-| Report contains an earlier snapshot        | Check whether final export succeeded; inspect the log.                                                        |
-| Log write failure                          | Console warning and log directory permissions.                                                                |
-| Invalid startup type                       | Enter `Automatic`, `Manual` or `Disabled`.                                                                    |
+Sample files are available in the [examples](examples/) directory:
 
-Review `service_manager.log` when execution completes with errors.
+- [CSV Report](examples/services.csv)
+- [JSON Report](examples/services.json)
+- [Diagnostic Log](examples/service_manager.log)
+
+These examples demonstrate the generated file formats without requiring the script to be executed.
+
+## Troubleshooting
+
+| Issue                                  | Possible Solution                                                                       |
+| -------------------------------------- | --------------------------------------------------------------------------------------- |
+| Access denied                          | Run PowerShell as Administrator and verify service permissions.                         |
+| Service not found or ambiguous         | Use the exact internal service `Name` from the exported report.                         |
+| Service cannot be stopped or restarted | Check dependent services and consider `-Force` only when appropriate.                   |
+| Invalid startup type                   | Use `Automatic`, `Manual` or `Disabled`.                                                |
+| Report export fails                    | Verify directory permissions, available disk space and whether output files are locked. |
+| Report contains outdated information   | Verify that the final export succeeded and review the diagnostic log.                   |
+| Log write failure                      | Check output directory permissions and any console warnings.                            |
 
 ## License
 
-Released under the MIT License. See [LICENSE](LICENSE).
+This project is released under the MIT License. See the [LICENSE](LICENSE) file for details.
